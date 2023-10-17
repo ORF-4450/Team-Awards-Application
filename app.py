@@ -1,4 +1,4 @@
-# Task: find all the teams 4450 will be upagainst by finding each event 4450 is competing in and looking at those teams
+# Task: find all the teams 4450 will be upagainst by finding each match frc4450 had competed in and look up those matches to find the teams in those matches
 
 import requests
 import pandas
