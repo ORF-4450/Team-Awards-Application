@@ -25,21 +25,24 @@ print("Please wait...")
 matches = getData("https://www.thebluealliance.com/api/v3/team/frc4450/matches/" + year)
 
 teams = []
+toBeRequestedTeams = []
 threads = []
 
 for match in matches:
     redAllianceTeams = match["alliances"]["red"]["team_keys"]
     for team in redAllianceTeams:
-        if (not team in teams) and team != "frc4450":
+        if (not team in toBeRequestedTeams) and team != "frc4450":
             thread = threading.Thread(target=getRewards, args=(team,))
             threads.append(thread)
             thread.start()
+            toBeRequestedTeams.append(team)
     blueAllianceTeams = match["alliances"]["blue"]["team_keys"]
     for team in blueAllianceTeams:
-        if (not team in teams) and team != "frc4450":
+        if (not team in toBeRequestedTeams) and team != "frc4450":
             thread = threading.Thread(target=getRewards, args=(team,))
             threads.append(thread)
             thread.start()
+            toBeRequestedTeams.append(team)
 
 for thread in threads:
     thread.join()
