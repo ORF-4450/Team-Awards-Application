@@ -1,10 +1,9 @@
-# Task: find all the teams 4450 will be upagainst by finding each match frc4450 had competed in and look up those matches to find the teams in those matches and the rewards
-
 import requests
 import json
 import threading
 import tkinter
-import tkinter.simpledialog
+import tkinter.messagebox
+from datetime import date
 
 key = "V86v838SJb4GJhpaNbElRqLSLHFhyBc0LPBscDetwnXZosPS2pmtehPSNNsY6Hy1"
 
@@ -15,75 +14,117 @@ def getData(url):
 
 def getRewards(team):
     global year
-    teamString = team
+    global isFinished
+    global currentAwards
+
+    currentAwards = []
+
+    isFinished = False
     data = getData("https://www.thebluealliance.com/api/v3/team/" + team + "/awards/" + year)
     for award in data:
-        teamString += "\n\t" + award["name"]
-    teams.append(teamString)
+        currentAwards.append(award["name"])
 
-def getTeamData():
+    isFinished = True
+
+def getTeams():
     global isFinished
+    global year
+    global teams
+
+    isFinished = False
     matches = getData("https://www.thebluealliance.com/api/v3/team/frc4450/matches/" + year)
 
-    toBeRequestedTeams = []
-    threads = []
+    teams = []
 
     for match in matches:
         redAllianceTeams = match["alliances"]["red"]["team_keys"]
         for team in redAllianceTeams:
-            if (not team in toBeRequestedTeams) and team != "frc4450":
-                thread = threading.Thread(target=getRewards, args=(team,))
-                threads.append(thread)
-                thread.daemon = True
-                thread.start()
-                toBeRequestedTeams.append(team)
+            if (not team in teams) and team != "frc4450":
+                teams.append(team)
         blueAllianceTeams = match["alliances"]["blue"]["team_keys"]
         for team in blueAllianceTeams:
-            if (not team in toBeRequestedTeams) and team != "frc4450":
-                thread = threading.Thread(target=getRewards, args=(team,))
-                threads.append(thread)
-                thread.daemon = True
-                thread.start()
-                toBeRequestedTeams.append(team)
-
-    for thread in threads:
-        thread.join()
+            if (not team in team) and team != "frc4450":
+                team.append(team)
 
     isFinished = True
 
 def waitForFinish():
     global isFinished
     global teams
+    global requestType
+    global currentAwards
     if isFinished:
-        pleaseWaitLabel.grid_remove()
-        teamListBox.configure(listvariable=tkinter.StringVar(value=teams))
-        mainContainer.grid(row=0, column=0, sticky=tkinter.NSEW)
+        if (requestType == "team"):
+            pleaseWaitLabel.grid_forget()
+            teamListBox.configure(listvariable=tkinter.StringVar(value=teams))
+            mainContainer.grid(row=1, column=0, columnspan=2, sticky="NSEW")
+            submitButton.configure(state=tkinter.NORMAL)
+        if (requestType == "award"):
+            teamAwardLabel.grid_forget()
+            teamAwardBox.configure(listvariable=tkinter.StringVar(value=currentAwards))
+            teamAwardBox.grid(row=0, column=0, sticky="NSEW")
+            teamAwardBox.configure(state=tkinter.NORMAL)
+            submitButton.configure(state=tkinter.NORMAL)
     else:
         mainWindow.after(10, waitForFinish)
 
-mainWindow = tkinter.Tk()
-mainWindow.geometry("960x540")
-mainWindow.rowconfigure(0, weight=1)
-mainWindow.columnconfigure(0, weight=1)
-pleaseWaitLabel = tkinter.Label(mainWindow, text="Please wait...")
-pleaseWaitLabel.grid(row=0, column=0, sticky=tkinter.N)
-mainContainer = tkinter.PanedWindow(mainWindow, orient=tkinter.HORIZONTAL)
-teamListBox = tkinter.Listbox(mainContainer)
-mainContainer.add(teamListBox, sticky=tkinter.NSEW)
-teamAwardBox = tkinter.Listbox(mainContainer)
-mainContainer.add(teamAwardBox, sticky=tkinter.NSEW)
+def submitRequest(*args):
+    global year
+    global requestType
+    try:
+        year = int(yearInput.get())
+        if year < 0:
+            raise ValueError()
+    except ValueError:
+        tkinter.messagebox.showerror(title="Error", message="Please enter a positive number")
+    else:
+        requestType = "team"
+        year = str(year)
+        thread = threading.Thread(target=getTeams)
+        thread.daemon = True
+        thread.start()
+        submitButton.configure(state=tkinter.DISABLED)
+        mainContainer.grid_forget()
+        pleaseWaitLabel.grid(row=1, column=0, columnspan=2, sticky="N")
+        teamAwardBox.grid_forget()
+        teamAwardLabel.configure(text="Please select a team")
+        teamAwardLabel.grid(row=0, column=0, sticky="N")
+        mainWindow.after(10, waitForFinish)
 
-year = tkinter.simpledialog.askinteger(title="Year", prompt="What year do you want to know the awards of the teams orf4450 has competed with?", minvalue=0)
-
-if (year != None):
-    year = str(year)
-    isFinished = False
-    teams = []
-    thread = threading.Thread(target=getTeamData)
+def submitAwardRequest(*args):
+    global requestType
+    requestType = "award"
+    thread = threading.Thread(target=getRewards, args=(str(teams[teamListBox.curselection()[0]]),))
     thread.daemon = True
     thread.start()
+    teamAwardBox.grid_forget()
+    teamAwardLabel.configure(text="Please wait...")
+    teamAwardLabel.grid(row=0, column=0, sticky="N")
+    teamAwardBox.configure(state=tkinter.DISABLED)
+    submitButton.configure(state=tkinter.DISABLED)
     mainWindow.after(10, waitForFinish)
-else:
-    mainWindow.destroy()
+
+mainWindow = tkinter.Tk()
+mainWindow.geometry("960x540")
+mainWindow.title("orf4450 Team Awards Application")
+mainWindow.rowconfigure(1, weight=1)
+mainWindow.columnconfigure(0, weight=1)
+yearInput = tkinter.Entry(mainWindow)
+yearInput.grid(row=0, column=0, sticky="NSEW")
+submitButton = tkinter.Button(mainWindow, text="Submit", command=submitRequest)
+submitButton.grid(row=0, column=1)
+pleaseWaitLabel = tkinter.Label(mainWindow, text="Please wait...")
+mainContainer = tkinter.PanedWindow(mainWindow, orient=tkinter.HORIZONTAL)
+teamListBox = tkinter.Listbox(mainContainer)
+mainContainer.add(teamListBox, sticky="NSEW")
+awardContainer = tkinter.Frame(mainContainer)
+awardContainer.rowconfigure(0, weight=1)
+awardContainer.columnconfigure(0, weight=1)
+teamAwardBox = tkinter.Listbox(awardContainer)
+teamAwardLabel = tkinter.Label(awardContainer, text="Please select a team")
+teamAwardLabel.grid(row=0, column=0, sticky="N")
+mainContainer.add(awardContainer, sticky="NSEW")
+
+teamListBox.bind("<<ListboxSelect>>", submitAwardRequest)
 
 mainWindow.mainloop()
