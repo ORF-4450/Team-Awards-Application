@@ -3,7 +3,6 @@ import json
 import threading
 import tkinter
 import tkinter.messagebox
-from datetime import date
 
 key = "V86v838SJb4GJhpaNbElRqLSLHFhyBc0LPBscDetwnXZosPS2pmtehPSNNsY6Hy1"
 
