@@ -109,6 +109,7 @@ def openTBA(*args):
 
 mainWindow = tkinter.Tk()
 mainWindow.geometry("960x540")
+mainWindow.minsize(400, 200)
 mainWindow.title("orf4450 Team Awards Application")
 mainWindow.rowconfigure(1, weight=1)
 mainWindow.columnconfigure(0, weight=1)
