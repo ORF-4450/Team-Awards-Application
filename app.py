@@ -3,6 +3,7 @@ import json
 import threading
 import tkinter
 import tkinter.messagebox
+import webbrowser
 
 key = "V86v838SJb4GJhpaNbElRqLSLHFhyBc0LPBscDetwnXZosPS2pmtehPSNNsY6Hy1"
 
@@ -103,6 +104,9 @@ def submitAwardRequest(*args):
     submitButton.configure(state=tkinter.DISABLED)
     mainWindow.after(10, waitForFinish)
 
+def openTBA(*args):
+    webbrowser.open_new_tab("https://www.thebluealliance.com/")
+
 mainWindow = tkinter.Tk()
 mainWindow.geometry("960x540")
 mainWindow.title("orf4450 Team Awards Application")
@@ -122,8 +126,11 @@ awardContainer.columnconfigure(0, weight=1)
 teamAwardBox = tkinter.Listbox(awardContainer)
 teamAwardLabel = tkinter.Label(awardContainer, text="Please select a team")
 teamAwardLabel.grid(row=0, column=0, sticky="N")
+tbaButton = tkinter.Button(mainWindow, text="Powered by The Blue Alliance", relief="flat", command=openTBA)
+tbaButton.grid(row=2, column=0, columnspan=2, sticky="N")
 mainContainer.add(awardContainer, sticky="NSEW")
 
 teamListBox.bind("<<ListboxSelect>>", submitAwardRequest)
+yearInput.bind("<KeyPress-Return>", submitRequest)
 
 mainWindow.mainloop()
